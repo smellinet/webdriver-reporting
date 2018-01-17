@@ -17,7 +17,7 @@ function unique(a){
         }
         r[r.length] = a[i];
     }
-    return r;
+    return r.sort();
 }
 
 
