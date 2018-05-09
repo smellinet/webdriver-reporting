@@ -19,6 +19,7 @@ package ch.vorburger.webdriver.reporting;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Date;
 
 import org.junit.rules.TestWatchman;
 import org.junit.runners.model.FrameworkMethod;
@@ -54,11 +55,12 @@ public class LoggingTestWatchman extends TestWatchman {
 
 	@Override
 	public void starting(FrameworkMethod method) {
+		Date startdate = new Date();
 		reportWriter.clearInfoString();
-		reportWriter.createNewTestReportFile(method, getReportFileName(method));
+		reportWriter.createNewTestReportFile(method, getReportFileName(method),startdate);
 		reportWriter.info("Start Test: " + testName(method));
 		reportWriter.getPackageName("Start Test: " + testName(method) + " :Package Name " + packageName(method));
-		reportWriter.addTestClassNameToJS(createPackageNamewithTestName(method));
+		reportWriter.addTestClassNameToJS(createPackageNamewithTestName(method),startdate);
 	}
 
 	@Override

@@ -21,6 +21,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,6 +54,7 @@ public class TestCaseReportWriter
 
 	private StringBuffer infoString = new StringBuffer("");
 	private File logFile;
+	private DateFormat fmtDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 
 	private StringBuffer getInfoString() {
@@ -74,7 +78,7 @@ public class TestCaseReportWriter
 		this.logFile = logFile;
 	}
 
-	public void createNewTestReportFile(FrameworkMethod method, String reportFileName) {
+	public void createNewTestReportFile(FrameworkMethod method, String reportFileName,Date startDate) {
 		BufferedWriter bufferedWriter = null;
 		try {
 			File file = new File(reportDirFile, reportFileName);
@@ -82,7 +86,7 @@ public class TestCaseReportWriter
 				file.getParentFile().mkdirs();
 			}
 			bufferedWriter = new BufferedWriter(new FileWriter(file));
-			bufferedWriter.write(getHeader());
+			bufferedWriter.write(getHeader(startDate));
 			setLogFile(file);
 
 		} catch (IOException e) {
@@ -101,8 +105,9 @@ public class TestCaseReportWriter
 
 	/**
 	 * Returns appropriate HTML headers.
+	 * @param startDate 
 	 */
-	protected String getHeader() {
+	protected String getHeader(Date startDate) {
 		// TODO Should copy this out from a HTML fragment (!) on classpath... just need to deal with Date below
 		StringBuffer sbuf = new StringBuffer();
 		sbuf.append("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">" + LINE_SEP);
@@ -123,7 +128,7 @@ public class TestCaseReportWriter
 
 		sbuf.append("</head>" + LINE_SEP);
 		sbuf.append("<body onload=\"init();\" bgcolor=\"#D8D8D8\" topmargin=\"0\" leftmargin=\"0\">" + LINE_SEP);
-		sbuf.append("<font size=\"2\">Log session start time " + new java.util.Date() + "</font><br>" + LINE_SEP);
+		sbuf.append("<font size=\"2\">Log session start time " + startDate + "</font><br>" + LINE_SEP);
 		sbuf.append("<hr size=\"1\" noshade>" + LINE_SEP);
 		sbuf.append("<div id=\"status\" width=\"100%\"> </div>" + LINE_SEP);
 
@@ -234,7 +239,7 @@ public class TestCaseReportWriter
 				infoString.append("Class: " + message);
 			} else if (stackTraceFlag) {
 				infoString.append("<div class=\"cell2\">");
-				infoString.append(message);
+				infoString.append(message.replace(LINE_SEP, "<br>"));
 			} else {
 				infoString.append("<div class=\"cell2\">");
 				infoString
@@ -259,8 +264,9 @@ public class TestCaseReportWriter
 			message = message.substring(flagIndex+7,message.length());
 		}
 
+		String timeStamp = fmtDate.format(new Date(tableId));
 		if (indx > 0) {
-			infoString.append("<span class=\"spanClass\">Action taken: " + message.substring(0, indx) + "</span>");
+			infoString.append("<span class=\"spanClass\">Action taken: " + message.substring(0, indx) + ", Date: " + timeStamp+" </span>");
 		} else {
 			if (startTestFlag) {
 				infoString.append("<span class=\"spanClass\">Test Name: " + message + "</span>");
@@ -269,7 +275,7 @@ public class TestCaseReportWriter
 				infoString.append("<span class=\"spanClassST\" id=\"" + (tableId + randomId) + "ST\">Exception Message: "
 						+ message.substring(tempIndx + 1, message.length()) + "</span>");
 			} else {
-				infoString.append("<span class=\"spanClass\">Action taken: " + message + "</span>");
+				infoString.append("<span class=\"spanClass\">Action taken: " + message +  ", Date: " + timeStamp+"</span>");
 			}
 		}
 
@@ -361,11 +367,13 @@ public class TestCaseReportWriter
 	}
 
 	// package local
-	void addTestClassNameToJS(String className) {
+	void addTestClassNameToJS(String className,Date startDate) {
 		BufferedWriter bw = null;
 		try {
 			bw = new BufferedWriter(new FileWriter(jsFile, true));
 			bw.write("testClassArray.push(\"" + className + "\");");
+			bw.newLine();
+			bw.write("datetimeTests[\""+className + "\"] = \""+fmtDate.format(startDate) +"\";");
 			bw.newLine();
 			bw.flush();
 		} catch (IOException ioe) {

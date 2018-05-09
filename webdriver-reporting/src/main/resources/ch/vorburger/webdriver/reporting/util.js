@@ -133,7 +133,7 @@ $(function(){
                 }
                 
                 
-                frameHtml = frameHtml + "<li style='" + styleStr + "'><span style='color: #090;'><a target='classFrame' onclick=\"copyStackTrace('" + fileName + "')\" title='" + fileName + "' href='" + loc + "'>" + fileName + "</a></span></li>";
+                frameHtml = frameHtml + "<li style='" + styleStr + "'><span style='color: #090;white-space: nowrap;'><a target='classFrame' onclick=\"copyStackTrace('" + fileName + "')\" title='" + fileName + "' href='" + loc + "'>" + fileName+" (" +datetimeTests[testClassArray[j]]+")"+ "</a></span></li>";
                 
                 tempPackageName = packageName;
             }
@@ -194,7 +194,7 @@ $(function(){
                 tempLink = testClassArray[testClassArray.length - 1].substring(0, indexDot);
                 //frameHtml = "<h3><a href='./" + tempLink + "/" + hrefLink + "_log.html?stackTraceFlag=true' onclick='showStackTrace();' target='classFrame'>Show StackTrace</a></h3>";
 			}
-            frameHtml = frameHtml + "<h2>Test Summary</h2><table style=\"width:100%\" id=\"box-table-a\"><tr><th>Package Name</th><th>Total Tests</th><th>Pass Tests</th><th>Fail tests</th></tr>";
+            frameHtml = frameHtml + "<h2>Test Summary</h2><table style=\"width:100%\" class=\"box-table-a\"><tr><th>Package Name</th><th>Total Tests</th><th>Pass Tests</th><th>Fail tests</th></tr>";
             for (var index1 = 0; index1 < packageArray.length; index1++) {
                 frameHtml = frameHtml + "<tr><td>" + packageArray[index1] + "</td>";
                 
@@ -226,14 +226,36 @@ $(function(){
             
             
             frameHtml = frameHtml + "<tr style=\"background-color: #006699; color: #000000\"><td  style=\"background-color:#006699; font-weight: bold; color: #000000\">Total</td><td  style=\"background-color: #006699; font-weight: bold; color: #000000\">" +
-            testClassArray.length +
-            "</td><td  style=\"background-color: #006699; font-weight: bold; color: #000000\">" +
-            (testClassArray.length - failedTestClassArray.length) +
-            "</td><td  style=\"background-color: #006699; font-weight: bold; color: #000000\">" +
-            failedTestClassArray.length +
-            "</td></tr>"
-            $body.html("</table>" + frameHtml);
-            
+		testClassArray.length +
+		"</td><td  style=\"background-color: #006699; font-weight: bold; color: #000000\">" +
+		(testClassArray.length - failedTestClassArray.length) +
+		"</td><td  style=\"background-color: #006699; font-weight: bold; color: #000000\">" +
+		failedTestClassArray.length +
+		"</td></tr></table>";
+	    frameHtml = frameHtml + "<h2>Tests sorted by date</h2>"+
+		"<table class=\"box-table-a\" style='table-layout: auto;'><tr><th>Test Name</th><th>Start Date</th><th>Status</th></tr>";
+	    for (var testName in datetimeTests) {
+		if (typeof datetimeTests[testName] !== 'function'){
+		    var styleStr;
+		    if (failedTestClassArray.contains(testName)) {
+			styleStr = "<li style='color: #D00;font-size: 20px;'/>";
+                    }
+                    else {
+			styleStr = "<li style='color: #090;font-size: 20px;'/>";
+                    }
+		    var indx = testName.lastIndexOf(".");
+                    var fileName = testName.substring(indx + 1, testName.length);
+                    var packageName = testName.substring(0, indx).toUpperCase();
+		    var loc = "./" + packageName + "/" + fileName + "_log.html";
+		    
+		    frameHtml = frameHtml + "<tr><td><a target='classFrame' onclick=\"copyStackTrace('" + fileName + "')\" title='" + fileName + "' href='" + loc + "'>"
+			+testName+"</a></td><td>"+datetimeTests[testName]+"</td><td>"+styleStr+"</td></tr>\n";
+		}
+	    }
+	    
+	    frameHtml = frameHtml + "</table>";
+            $body.html(frameHtml);
+         
         }
     }, 500);
 });

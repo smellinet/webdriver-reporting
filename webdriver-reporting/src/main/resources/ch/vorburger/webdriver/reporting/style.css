@@ -86,7 +86,7 @@ img {
     background-color: #38A7CB;
 }
 
-#box-table-a {
+.box-table-a {
     border-collapse: collapse;
     font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
     font-size: 12px;
@@ -95,7 +95,7 @@ img {
     width: 480px;
 }
 
-#box-table-a th {
+.box-table-a th {
     background: none repeat scroll 0 0 #006699;
     border-bottom: 1px solid #FFFFFF;
     font-size: 13px;
@@ -103,15 +103,16 @@ img {
     padding: 8px;
 }
 
-#box-table-a td {
+.box-table-a td {
     background: none repeat scroll 0 0 #E8EDFF;
     border-bottom: 1px solid #FFFFFF;
     border-top: 1px solid transparent;
     color: #666699;
     padding: 8px;
+    white-space : nowrap;
 }
 
-#box-table-a tr:hover td {
+.box-table-a tr:hover td {
     background: none repeat scroll 0 0 #D0DAFD;
     color: #333399;
 }
