@@ -61,7 +61,6 @@ public class SampleGoogleSearchReportTest {
 		WebElement element = driverWithReporting.findElement(By.name("q"));
 		element.sendKeys("Mifos");
 		element.submit();
-		
         (new WebDriverWait(driverWithReporting, 10))
         	.until(ExpectedConditions.presenceOfElementLocated(By.id("bfoot")));
         

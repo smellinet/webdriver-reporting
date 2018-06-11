@@ -19,6 +19,7 @@ package ch.vorburger.webdriver.reporting;
 import java.io.File;
 
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TakesScreenshot;
@@ -27,7 +28,6 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.events.AbstractWebDriverEventListener;
 import org.openqa.selenium.support.events.EventFiringWebDriver;
-
 
 /**
  * A WebDriverEventListener which logs method calls.
@@ -40,24 +40,26 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 
 	private final TestCaseReportWriter clsObj;
 
+	private String infoElement;
+	private String beforeValue;
+
 	public LoggingWebDriverEventListener(TestCaseReportWriter object) {
 		clsObj = object;
 	}
 
 	@Override
 	public void beforeClickOn(WebElement element, WebDriver driver) {
-//		try {
-//			if (getTagNameSafely(element) != null) {
-//				if ((getTagNameSafely(element).equalsIgnoreCase("span"))
-//						|| (getTagNameSafely(element).equalsIgnoreCase("button"))
-//						|| (getTagNameSafely(element).equalsIgnoreCase("div"))
-//						|| (getTagNameSafely(element).equalsIgnoreCase("img"))) {
-
-					logAndTakeSnapShot(driver, element, "Before Clicking");
-//				}
-//			}
-//		} catch (RuntimeException e) {
-//		}
+		// try {
+		// if (getTagNameSafely(element) != null) {
+		// if ((getTagNameSafely(element).equalsIgnoreCase("span"))
+		// || (getTagNameSafely(element).equalsIgnoreCase("button"))
+		// || (getTagNameSafely(element).equalsIgnoreCase("div"))
+		// || (getTagNameSafely(element).equalsIgnoreCase("img"))) {
+		logAndTakeSnapShot(driver, element, "Before Clicking");
+		// }
+		// }
+		// } catch (RuntimeException e) {
+		// }
 	}
 
 	@Override
@@ -65,11 +67,16 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 	}
 
 	@Override
-	public void afterChangeValueOf(WebElement element, WebDriver driver) {
+	public void beforeChangeValueOf(WebElement element, WebDriver driver, CharSequence[] keysToSend) {
 		try {
 			String tagName = getTagNameSafely(element);
-			if ("input".equalsIgnoreCase(tagName) || "select".equalsIgnoreCase(tagName) ) {
-				logAndTakeSnapShot(driver, element, "Setting value '" + getValueSafely(element) + "' on");
+			if ("input".equalsIgnoreCase(tagName) || "select".equalsIgnoreCase(tagName)) {
+				String value = "";
+				if (keysToSend.length > 0) {
+					value = replaceReturnChar(keysToSend[0].toString());
+					beforeValue = value;
+				}
+				logAndTakeSnapShot(driver, element, "Setting value '" + value + "' on");
 			}
 		} catch (RuntimeException e) {
 			// "Shit happens" - guess we can't log this one then :-(
@@ -77,8 +84,19 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 	}
 
 	@Override
+	public void afterChangeValueOf(WebElement element, WebDriver driver, CharSequence[] keysToSend) {
+		try {
+			logAndTakeSnapShot(driver, null,
+					"After Setting value '" + (beforeValue == null ? beforeValue : "") + "' on");
+			beforeValue = null;
+		} catch (RuntimeException e) {
+			// "Shit happens" - guess we can't log this one then :-(
+		}
+	}
+
+	@Override
 	public void afterClickOn(WebElement element, WebDriver driver) {
-		logAndTakeSnapShot(driver, element, "After Clicking");
+		logAndTakeSnapShot(driver, null, "After Clicking");
 	}
 
 	@Override
@@ -94,9 +112,12 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 	/**
 	 * This method will take snap shots of screens and save them.
 	 *
-	 * @param driver WebDriver
-	 * @param element WebElement
-	 * @param log message from the action
+	 * @param driver
+	 *            WebDriver
+	 * @param element
+	 *            WebElement
+	 * @param log
+	 *            message from the action
 	 */
 	protected void logAndTakeSnapShot(WebDriver driver, WebElement element, String log) {
 		addStyleBeforeSnapShot(element, driver);
@@ -118,14 +139,24 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 	/**
 	 * Log, with a screenshot.
 	 *
-	 * @param element the WebElement, to give context, can be null if the previous message already gave it
-	 * @param message the message to log, never null
-	 * @param screenshot the Screenshot File, can be null if no screenshot is to be logged. The File is copied.
+	 * @param element
+	 *            the WebElement, to give context, can be null if the previous message already gave it
+	 * @param message
+	 *            the message to log, never null
+	 * @param screenshot
+	 *            the Screenshot File, can be null if no screenshot is to be logged. The File is copied.
 	 */
 	private void log(WebElement element, String message, File screenshot) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(message);
+		sb.append(getInfoElement(element));
+		clsObj.infoWithFlagAndScreenshot(sb.toString(), screenshot);
+	}
+
+	private String getInfoElement(WebElement element) {
+		String info;
 		if (element != null) {
+			StringBuilder sb = new StringBuilder();
 			sb.append(" ");
 			String userVisibleLabel = getUserVisibleText(element);
 			if (userVisibleLabel != null) {
@@ -140,8 +171,15 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 			else if (getAttributeSafely(element, "name") != null) {
 				sb.append(" with name " + element.getAttribute("name"));
 			}
+			info = sb.toString();
+			infoElement = info;
+		} else {
+			info = infoElement;
 		}
-		clsObj.infoWithFlagAndScreenshot(sb.toString(), screenshot);
+		if (info == null) {
+			info = "";
+		}
+		return info;
 	}
 
 	/**
@@ -183,7 +221,7 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 	}
 
 	private String getValueSafely(WebElement element) {
-	  return getAttributeSafely(element, "value");
+		return getAttributeSafely(element, "value");
 	}
 
 	private String getTagNameSafely(WebElement element) {
@@ -205,10 +243,10 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 				webElementId = null;
 			}
 
-			if (webElementId != null && ! webElementId.isEmpty() && driver instanceof JavascriptExecutor) {
+			if (webElementId != null && !webElementId.isEmpty() && driver instanceof JavascriptExecutor) {
 				try {
 					((JavascriptExecutor) driver).executeScript("document.getElementById('" + webElementId
-							+ "').setAttribute('style','border:solid 2px #73A6FF;background:#EFF5FF;')", "");
+							+ "').setAttribute('style','border:solid 3px red')", "");
 				} catch (Throwable e) {
 					// Highlight ON didn't work, tant pis.
 				}
@@ -221,7 +259,7 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 		if (element != null) {
 			webElementId = getAttributeSafely(element, "id");
 
-			if (webElementId != null && ! webElementId.isEmpty() && driver instanceof JavascriptExecutor) {
+			if (webElementId != null && !webElementId.isEmpty() && driver instanceof JavascriptExecutor) {
 				try {
 					((JavascriptExecutor) driver).executeScript("document.getElementById('" + webElementId
 							+ "').setAttribute('style','border:;background:;')", "");
@@ -230,5 +268,13 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 				}
 			}
 		}
+	}
+
+	public String replaceReturnChar(String st) {
+		if (st != null && !st.isEmpty()) {
+			return st.replace(Keys.ENTER, "[\\n]");
+		}
+
+		return st;
 	}
 }
