@@ -87,7 +87,7 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 	public void afterChangeValueOf(WebElement element, WebDriver driver, CharSequence[] keysToSend) {
 		try {
 			logAndTakeSnapShot(driver, null,
-					"After Setting value '" + (beforeValue == null ? beforeValue : "") + "' on");
+					"After Setting value '" + (beforeValue != null ? beforeValue : "") + "' on");
 			beforeValue = null;
 		} catch (RuntimeException e) {
 			// "Shit happens" - guess we can't log this one then :-(
