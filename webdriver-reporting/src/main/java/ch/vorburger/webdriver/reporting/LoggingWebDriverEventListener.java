@@ -16,8 +16,6 @@
 
 package ch.vorburger.webdriver.reporting;
 
-import java.io.File;
-
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
@@ -73,7 +71,7 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 			if ("input".equalsIgnoreCase(tagName) || "select".equalsIgnoreCase(tagName)) {
 				String value = "";
 				if (keysToSend.length > 0) {
-					value = replaceReturnChar(keysToSend[0].toString());
+					value = replaceSpecialKeys(keysToSend[0].toString());
 					beforeValue = value;
 				}
 				logAndTakeSnapShot(driver, element, "Setting value '" + value + "' on");
@@ -128,8 +126,8 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 		}
 		if (driver instanceof TakesScreenshot) {
 			TakesScreenshot takesScreenshotWebDriver = (TakesScreenshot) driver;
-			File srcFile = takesScreenshotWebDriver.getScreenshotAs(OutputType.FILE);
-			log(element, log, srcFile);
+			byte[] screenshotPng = takesScreenshotWebDriver.getScreenshotAs(OutputType.BYTES);
+			log(element, log, screenshotPng);
 			removeStyleafterSnapShot(element, driver);
 		} else {
 			log(element, log, null);
@@ -143,14 +141,14 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 	 *            the WebElement, to give context, can be null if the previous message already gave it
 	 * @param message
 	 *            the message to log, never null
-	 * @param screenshot
-	 *            the Screenshot File, can be null if no screenshot is to be logged. The File is copied.
+	 * @param screenshotPNG
+	 *            the Screenshot PNG.
 	 */
-	private void log(WebElement element, String message, File screenshot) {
+	private void log(WebElement element, String message, byte[] screenshotPNG) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(message);
 		sb.append(getInfoElement(element));
-		clsObj.infoWithFlagAndScreenshot(sb.toString(), screenshot);
+		clsObj.infoWithFlagAndScreenshot(sb.toString(), screenshotPNG);
 	}
 
 	private String getInfoElement(WebElement element) {
@@ -270,9 +268,12 @@ public class LoggingWebDriverEventListener extends AbstractWebDriverEventListene
 		}
 	}
 
-	public String replaceReturnChar(String st) {
+	public String replaceSpecialKeys(String st) {
 		if (st != null && !st.isEmpty()) {
-			return st.replace(Keys.ENTER, "[\\n]");
+			st = st.replace(Keys.ENTER, "[\\n]");
+			st = st.replace(Keys.BACK_SPACE, "[\\b]");
+			st = st.replace(Keys.TAB, "[\\t]");	
+			return st;
 		}
 
 		return st;

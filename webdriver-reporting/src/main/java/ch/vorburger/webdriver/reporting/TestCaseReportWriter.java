@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.runners.model.FrameworkMethod;
@@ -55,6 +56,8 @@ public class TestCaseReportWriter
 	private StringBuffer infoString = new StringBuffer("");
 	private File logFile;
 	private DateFormat fmtDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	
+	private AtomicLong counter = new AtomicLong(1);
 
 
 	private StringBuffer getInfoString() {
@@ -426,16 +429,20 @@ public class TestCaseReportWriter
 		} // end try/catch/finally
 	}
 
-	public void infoWithFlagAndScreenshot(String message, File screenshot) {
-		if (screenshot != null) {
+	public void infoWithFlagAndScreenshot(String message, byte[] screenshotPNG) {
+		if (screenshotPNG != null) {
 			try {
-				FileUtils.copyFileToDirectory(screenshot, screenshotsDirFile, true);
+				File screenshotFile = new File(screenshotsDirFile,"screenshot"+counter.incrementAndGet()+".png");
+				FileUtils.writeByteArrayToFile(screenshotFile, screenshotPNG);
+
+				message = message + "^" + screenshotFile.getName();
+				
 			} catch (IOException e) {
 				throw new RuntimeException("Oups, WebDriver Report could't copy screenshot file?!", e);
 			}
 
-			message = message + "^" + screenshot.getName();
 		}
 		infoWithFlag(message);
+
 	}
 }
